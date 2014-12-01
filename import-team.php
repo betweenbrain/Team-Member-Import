@@ -215,17 +215,11 @@ class ImportTeamCli extends JApplicationCli
 	 */
 	private function saveItem($item)
 	{
-
-		// The item being imported is not a duplicate
 		if (!$this->isDuplicate($item))
 		{
 
-			$this->out('Processing ' . $item[$this->column->name]);
-
-			$table = JTable::getInstance('content', 'JTable');
-
-			$date = JFactory::getDate();
-
+			$date    = JFactory::getDate();
+			$table   = JTable::getInstance('content', 'JTable');
 			$article = array(
 				'access'       => 1,
 				'alias'        => JFilterOutput::stringURLSafe($item[$this->column->name]),
@@ -243,18 +237,12 @@ class ImportTeamCli extends JApplicationCli
 
 			try
 			{
-				$this->out('Saving ' . $item[$this->column->name], true);
-
 				$table->save($article);
 			} catch (RuntimeException $e)
 			{
-				$this->out('Saving ' . $item[$this->column->name] . ' failed', true);
-
 				$this->out($e->getMessage(), true);
 				$this->close($e->getCode());
 			}
-
-			$this->out('Saving ' . $item[$this->column->name] . ' done', true);
 		}
 	}
 }
