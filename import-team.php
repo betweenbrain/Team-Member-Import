@@ -218,31 +218,40 @@ class ImportTeamCli extends JApplicationCli
 		if (!$this->isDuplicate($item))
 		{
 
-			$date    = JFactory::getDate();
-			$table   = JTable::getInstance('content', 'JTable');
-			$article = array(
-				'access'       => 1,
-				'alias'        => JFilterOutput::stringURLSafe($item[$this->column->name]),
-				'catid'        => $this->getCategoryId($item[$this->column->office]),
-				'created'      => $date->toSQL(),
-				'created_by'   => $this->getAdminId(),
-				'introtext'    => '',
-				'language'     => '*',
-				'metadata'     => '{"robots":"","author":"","rights":"","xreference":"","tags":null}',
-				'publish_up'   => JFactory::getDate()->toSql(),
-				'publish_down' => $this->db->getNullDate(),
-				'state'        => 1,
-				'title'        => $item[$this->column->name]
-			);
+			$date                  = JFactory::getDate();
+			$article               = JTable::getInstance('content', 'JTable');
+			$article->access       = 1;
+			$article->alias        = JFilterOutput::stringURLSafe($item[$this->column->name]);
+			$article->catid        = $this->getCategoryId($item[$this->column->office]);
+			$article->created      = $date->toSQL();
+			$article->created_by   = $this->getAdminId();
+			$article->introtext    = '';
+			$article->language     = '*';
+			$article->metadata     = '{"robots":"","author":"","rights":"","xreference":"","tags":null}';
+			$article->publish_up   = JFactory::getDate()->toSql();
+			$article->publish_down = $this->db->getNullDate();
+			$article->state        = 1;
+			$article->title        = $item[$this->column->name];
 
 			try
 			{
-				$table->save($article);
+				$article->check();
 			} catch (RuntimeException $e)
 			{
 				$this->out($e->getMessage(), true);
 				$this->close($e->getCode());
 			}
+
+			try
+			{
+				$article->store(true);
+			} catch (RuntimeException $e)
+			{
+				$this->out($e->getMessage(), true);
+				$this->close($e->getCode());
+			}
+
+			$this->out($article->id);
 		}
 	}
 }
