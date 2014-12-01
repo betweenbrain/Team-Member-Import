@@ -59,6 +59,11 @@ class ImportTeamCli extends JApplicationCli
 	private $csvfile = null;
 
 	/**
+	 *
+	 */
+	private $fieldsMap = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param   object &$subject The object to observe
@@ -83,6 +88,12 @@ class ImportTeamCli extends JApplicationCli
 
 		$this->csvfile = $this->readCSVFile($this->input->get('file'));
 		$this->column  = $this->mapColumnNames($this->csvfile);
+
+		// Fields mapping file
+		if ($this->input->get('fieldsMap'))
+		{
+			$this->mapFieldsMap();
+		}
 	}
 
 	/**
@@ -200,6 +211,28 @@ class ImportTeamCli extends JApplicationCli
 		}
 
 		return $return;
+	}
+
+	/**
+	 * Processes a field mapping file for associating field IDs with column names
+	 */
+	private function mapFieldsMap()
+	{
+		$fields       = $this->readCSVFile($this->input->get('fieldsMap'));
+		$fieldsHeader = $this->mapColumnNames($fields);
+
+		array_shift($fields);
+
+		foreach ($fields as $field)
+		{
+			$fieldMap = new stdClass;
+
+			foreach ($fieldsHeader as $key => $value)
+			{
+				$fieldMap->{strtolower($key)} = $field[$value];
+			}
+			$this->fieldsMap[] = $fieldMap;
+		}
 	}
 
 	/**
