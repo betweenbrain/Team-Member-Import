@@ -1,8 +1,10 @@
 ## Team Member Import
 
-A Joomla CLI script for importing a CSV file as a set of Joomla articles, used as Team Member pages for [Starberry](http://starberry.tv/). 
+A Joomla CLI script for importing a CSV file as a set of Joomla articles, used as Team Member pages for [Starberry](http://starberry.tv/).
 
 ### Usage
+
+Clone this repo, or manually add `import-team.php`, to your Joomla site's `cli` directory.
 
 Used as `php import-team.php --file team.csv --parentId 11 --fieldsMap fields.csv`
 
