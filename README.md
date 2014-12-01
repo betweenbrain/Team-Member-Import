@@ -12,7 +12,7 @@ Where
  
  * `--file` [required] designates the CSV file containing data to import.
  * `--parentId` [optional] designates the category parent ID to use when looking up a category ID based on the category alias.
- * `fieldsMap` [optional, requiored for FieldsAttach] used to designate a fields mapping file to define the field IDs and the CSV column names they correspond to.
+ * `--fieldsMap` [optional, required for FieldsAttach] used to designate a fields mapping file to define the field IDs and the CSV column names they correspond to.
  
 ### Fields Mapping File
 Is a simple two column file with the first row having column names of `fieldid` and `column`. Subsequent rows to contain the related data. Such as:
