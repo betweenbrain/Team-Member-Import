@@ -80,9 +80,16 @@ class ImportTeamCli extends JApplicationCli
 			$this->saveItems($xml, 2);
 		}
 		*/
+	}
 
-		$xml = $this->getFeed('http://www.winkworth.co.uk/property-blog/feed/');
-		$this->saveItems($xml, 2);
+	/**
+	 * Read a CSV file and return it as a multidimensional array
+	 *
+	 * @return array
+	 */
+	public function readCSVFile($fileName)
+	{
+		return array_map('str_getcsv', file($fileName));
 	}
 }
 
