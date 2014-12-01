@@ -85,6 +85,18 @@ class ImportTeamCli extends JApplicationCli
 		$this->column  = $this->mapColumnNames($this->csvfile);
 	}
 
+	private function isDuplicate($article)
+	{
+		$query = $this->db->getQuery(true);
+		$query
+			->select($this->db->quoteName('id'))
+			->from($this->db->quoteName('#__content'))
+			->where($this->db->quoteName('alias') . ' = ' . $this->db->quote(JFilterOutput::stringURLSafe($article[$this->column->name])));
+		$this->db->setQuery($query);
+
+		return $this->db->loadResult() ? true : false;
+	}
+
 	/**
 	 * Entry point for CLI script
 	 *
