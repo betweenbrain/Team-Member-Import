@@ -89,14 +89,16 @@ class ImportTeamCli extends JApplicationCli
 	 *
 	 * @return mixed
 	 */
-	private function mapCsvHeaderRow($csvfile)
+	private function mapColumnNames($csvfile)
 	{
+		$return = new stdClass;
+
 		foreach ($csvfile[0] as $key => $value)
 		{
-			$header[strtolower($value)] = $key;
+			$return->{strtolower($value)} = $key;
 		}
 
-		return $header;
+		return $return;
 	}
 
 	/**
