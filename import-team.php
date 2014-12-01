@@ -309,7 +309,10 @@ class ImportTeamCli extends JApplicationCli
 				$this->close($e->getCode());
 			}
 
-			$this->insertFieldsattachValues($article->id, $item);
+			if ($this->input->get('fieldsMap'))
+			{
+				$this->insertFieldsattachValues($article->id, $item);
+			}
 		}
 	}
 }
