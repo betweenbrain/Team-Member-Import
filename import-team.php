@@ -86,8 +86,11 @@ class ImportTeamCli extends JApplicationCli
 			exit;
 		}
 
-		$this->csvfile   = $this->readCSVFile($this->input->get('file'));
-		$this->columnMap = $this->mapColumnNames($this->csvfile);
+		$csvData         = $this->readCSVFile($this->input->get('file'));
+		$this->columnMap = $this->mapColumnNames($csvData);
+
+		array_shift($csvData);
+		$this->csvfile = $csvData;
 
 		// Fields mapping file
 		if ($this->input->get('fieldsMap'))
