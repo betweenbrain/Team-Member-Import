@@ -45,6 +45,20 @@ class ImportTeamCli extends JApplicationCli
 {
 
 	/**
+	 * For column name mapping
+	 *
+	 * @var null
+	 */
+	private $column = null;
+
+	/**
+	 * The CSV file
+	 *
+	 * @var null
+	 */
+	private $csvfile = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param   object &$subject The object to observe
@@ -59,6 +73,16 @@ class ImportTeamCli extends JApplicationCli
 
 		// Set JFactory::$application object to avoid system using incorrect defaults
 		JFactory::$application = $this;
+
+		if (!$this->input->get('file'))
+		{
+			$this->out('You must enter the name as follows:');
+			$this->out(' --file foo.csv');
+			exit;
+		}
+
+		$this->csvfile = $this->readCSVFile($this->input->get('file'));
+		$this->column  = $this->mapColumnNames($this->csvfile);
 	}
 
 	/**
@@ -109,6 +133,86 @@ class ImportTeamCli extends JApplicationCli
 	public function readCSVFile($fileName)
 	{
 		return array_map('str_getcsv', file($fileName));
+	}
+
+	/**
+	 * Saves each non-duplicated item as a Joomla article
+	 *
+	 * @param $xml
+	 * @param $catId
+	 */
+	private function saveItems($xml, $catId)
+	{
+		$query = $this->db->getQuery(true);
+		$query
+			->select($this->db->quoteName('title'))
+			->from($this->db->quoteName('#__content'))
+			->where(
+				$this->db->quoteName('catid') . ' = ' . $catId . ' AND ' .
+				$this->db->quoteName('state') . ' = 1');
+		$this->db->setQuery($query);
+		$articles = $this->db->loadObjectList();
+
+		foreach ($xml->channel->item as $item)
+		{
+
+			$duplicate = false;
+
+			// Check for duplicates between those being imported and those already saved
+			foreach ($articles as $article)
+			{
+				if ($article->title == $item->title)
+				{
+					$duplicate = true;
+				}
+			}
+
+			// The item being imported is not a duplicate
+			if (!$duplicate)
+			{
+
+				$this->out('Processing ' . (string) $item->title);
+
+				$table = JTable::getInstance('content', 'JTable');
+
+				//return print_r($item, true);
+
+				$creator = $item->children('dc', true);
+				$date    = JFactory::getDate($item->pubDate);
+
+				$article = array(
+					'access'           => 1,
+					'alias'            => JFilterOutput::stringURLSafe($item->title),
+					'catid'            => $catId,
+					'created'          => $date->toSQL(),
+					'created_by'       => $this->getAdminId(),
+					'created_by_alias' => (string) $creator,
+					'introtext'        => (string) $item->description,
+					'language'         => '*',
+					'metadata'         => '{"robots":"","author":"","rights":"","xreference":"","tags":null}',
+					'publish_up'       => JFactory::getDate()->toSql(),
+					'publish_down'     => $this->db->getNullDate(),
+					'state'            => 1,
+					'title'            => (string) $item->title[0],
+					'xreference'       => (string) $item->guid
+				);
+
+				try
+				{
+					$this->out('Saving ' . $article['title'], true);
+
+					$table->save($article);
+				} catch (RuntimeException $e)
+				{
+					$this->out('Saving ' . $article['title'] . ' failed', true);
+
+					$this->out($e->getMessage(), true);
+					$this->close($e->getCode());
+				}
+
+				$this->out('Saving ' . $article['title'] . ' done', true);
+			}
+		}
 	}
 }
 
