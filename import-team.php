@@ -173,6 +173,11 @@ class ImportTeamCli extends JApplicationCli
 			->select($this->db->quoteName('id'))
 			->from($this->db->quoteName('#__categories'))
 			->where($this->db->quoteName('alias') . ' = ' . $this->db->quote(JFilterOutput::stringURLSafe($name)));
+		if ($this->input->get('parentId'))
+		{
+			$query
+				->where($this->db->quoteName('parent_id') . ' = ' . $this->db->quote($this->input->get('parentId')));
+		}
 		$this->db->setQuery($query);
 
 		return $this->db->loadResult() ? $this->db->loadResult() : '2';
