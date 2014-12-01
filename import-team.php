@@ -83,6 +83,23 @@ class ImportTeamCli extends JApplicationCli
 	}
 
 	/**
+	 * Read the first row of a CSV to create a name based mapping of column values
+	 *
+	 * @param $csvfile
+	 *
+	 * @return mixed
+	 */
+	private function mapCsvHeaderRow($csvfile)
+	{
+		foreach ($csvfile[0] as $key => $value)
+		{
+			$header[strtolower($value)] = $key;
+		}
+
+		return $header;
+	}
+
+	/**
 	 * Read a CSV file and return it as a multidimensional array
 	 *
 	 * @return array
