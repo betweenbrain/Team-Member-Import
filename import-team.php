@@ -195,6 +195,26 @@ class ImportTeamCli extends JApplicationCli
 	}
 
 	/**
+	 * Method to insert fields as mapped by the fields mapping file
+	 *
+	 * @param $article
+	 */
+	private function insertFieldsattachValues($id, $item)
+	{
+
+		foreach ($this->fieldsMap as $fieldMap)
+		{
+			// Create and populate an object.
+			$field            = new stdClass();
+			$field->articleid = $id;
+			$field->fieldsid  = $fieldMap->fieldid;
+			$field->value     = $item[$this->column->{$fieldMap->column}];
+
+			$this->db->insertObject('#__fieldsattach_values', $field);
+		}
+	}
+
+	/**
 	 * Read the first row of a CSV to create a name based mapping of column values
 	 *
 	 * @param $csvfile
@@ -289,7 +309,7 @@ class ImportTeamCli extends JApplicationCli
 				$this->close($e->getCode());
 			}
 
-			$this->out($article->id);
+			$this->insertFieldsattachValues($article->id, $item);
 		}
 	}
 }
