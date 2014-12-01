@@ -85,6 +85,13 @@ class ImportTeamCli extends JApplicationCli
 		$this->column  = $this->mapColumnNames($this->csvfile);
 	}
 
+	/**
+	 * Checks if an article already exists based on the article alias derived from the column "name"
+	 *
+	 * @param $article
+	 *
+	 * @return bool
+	 */
 	private function isDuplicate($article)
 	{
 		$query = $this->db->getQuery(true);
@@ -106,16 +113,50 @@ class ImportTeamCli extends JApplicationCli
 	 */
 	public function execute()
 	{
-		// Test of using config file
-		/*
-		include_once('import_config.php');
 
-		foreach ($config as $url => $catdid)
+		$this->out(JProfiler::getInstance('Application')->mark('Starting script.'));
+
+		foreach ($this->csvfile as $row)
 		{
-			$xml = $this->getFeed($url . '/feed');
-			$this->saveItems($xml, 2);
+			$this->saveItem($row);
 		}
-		*/
+
+		$this->out(JProfiler::getInstance('Application')->mark('Finished script.'));
+
+		// Load global config
+		// $this->out(print_r($this->loadConfiguration(null), true));
+	}
+
+	/**
+	 * Retrieve the admin user id.
+	 *
+	 * @return  int|bool One Administrator ID
+	 *
+	 * @since   3.2
+	 */
+	private function getAdminId()
+	{
+		$db    = JFactory::getDbo();
+		$query = $db->getQuery(true);
+
+		// Select the required fields from the updates table
+		$query
+			->clear()
+			->select('u.id')
+			->from('#__users as u')
+			->join('LEFT', '#__user_usergroup_map AS map ON map.user_id = u.id')
+			->join('LEFT', '#__usergroups AS g ON map.group_id = g.id')
+			->where('g.title = ' . $db->q('Super Users'));
+
+		$db->setQuery($query);
+		$id = $db->loadResult();
+
+		if (!$id || $id instanceof Exception)
+		{
+			return false;
+		}
+
+		return $id;
 	}
 
 	/**
@@ -153,77 +194,48 @@ class ImportTeamCli extends JApplicationCli
 	 * @param $xml
 	 * @param $catId
 	 */
-	private function saveItems($xml, $catId)
+	private function saveItem($item)
 	{
-		$query = $this->db->getQuery(true);
-		$query
-			->select($this->db->quoteName('title'))
-			->from($this->db->quoteName('#__content'))
-			->where(
-				$this->db->quoteName('catid') . ' = ' . $catId . ' AND ' .
-				$this->db->quoteName('state') . ' = 1');
-		$this->db->setQuery($query);
-		$articles = $this->db->loadObjectList();
 
-		foreach ($xml->channel->item as $item)
+		// The item being imported is not a duplicate
+		if (!$this->isDuplicate($item))
 		{
 
-			$duplicate = false;
+			$this->out('Processing ' . $item[$this->column->name]);
 
-			// Check for duplicates between those being imported and those already saved
-			foreach ($articles as $article)
+			$table = JTable::getInstance('content', 'JTable');
+
+			$date = JFactory::getDate();
+
+			$article = array(
+				'access'       => 1,
+				'alias'        => JFilterOutput::stringURLSafe($item[$this->column->name]),
+				'catid'        => '2',
+				'created'      => $date->toSQL(),
+				'created_by'   => $this->getAdminId(),
+				'introtext'    => '',
+				'language'     => '*',
+				'metadata'     => '{"robots":"","author":"","rights":"","xreference":"","tags":null}',
+				'publish_up'   => JFactory::getDate()->toSql(),
+				'publish_down' => $this->db->getNullDate(),
+				'state'        => 1,
+				'title'        => $item[$this->column->name]
+			);
+
+			try
 			{
-				if ($article->title == $item->title)
-				{
-					$duplicate = true;
-				}
+				$this->out('Saving ' . $item[$this->column->name], true);
+
+				$table->save($article);
+			} catch (RuntimeException $e)
+			{
+				$this->out('Saving ' . $item[$this->column->name] . ' failed', true);
+
+				$this->out($e->getMessage(), true);
+				$this->close($e->getCode());
 			}
 
-			// The item being imported is not a duplicate
-			if (!$duplicate)
-			{
-
-				$this->out('Processing ' . (string) $item->title);
-
-				$table = JTable::getInstance('content', 'JTable');
-
-				//return print_r($item, true);
-
-				$creator = $item->children('dc', true);
-				$date    = JFactory::getDate($item->pubDate);
-
-				$article = array(
-					'access'           => 1,
-					'alias'            => JFilterOutput::stringURLSafe($item->title),
-					'catid'            => $catId,
-					'created'          => $date->toSQL(),
-					'created_by'       => $this->getAdminId(),
-					'created_by_alias' => (string) $creator,
-					'introtext'        => (string) $item->description,
-					'language'         => '*',
-					'metadata'         => '{"robots":"","author":"","rights":"","xreference":"","tags":null}',
-					'publish_up'       => JFactory::getDate()->toSql(),
-					'publish_down'     => $this->db->getNullDate(),
-					'state'            => 1,
-					'title'            => (string) $item->title[0],
-					'xreference'       => (string) $item->guid
-				);
-
-				try
-				{
-					$this->out('Saving ' . $article['title'], true);
-
-					$table->save($article);
-				} catch (RuntimeException $e)
-				{
-					$this->out('Saving ' . $article['title'] . ' failed', true);
-
-					$this->out($e->getMessage(), true);
-					$this->close($e->getCode());
-				}
-
-				$this->out('Saving ' . $article['title'] . ' done', true);
-			}
+			$this->out('Saving ' . $item[$this->column->name] . ' done', true);
 		}
 	}
 }
