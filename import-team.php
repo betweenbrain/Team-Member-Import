@@ -160,7 +160,7 @@ class ImportTeamCli extends JApplicationCli
 	}
 
 	/**
-	 * Lookup the category ID by matching the alias version of the name
+	 * Lookup the category ID by matching the alias version of the name. Falls back to ID 2 which is uncategorized.
 	 *
 	 * @param $name
 	 *
