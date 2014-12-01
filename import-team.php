@@ -160,6 +160,25 @@ class ImportTeamCli extends JApplicationCli
 	}
 
 	/**
+	 * Lookup the category ID by matching the alias version of the name
+	 *
+	 * @param $name
+	 *
+	 * @return string
+	 */
+	private function getCategoryId($name)
+	{
+		$query = $this->db->getQuery(true);
+		$query
+			->select($this->db->quoteName('id'))
+			->from($this->db->quoteName('#__categories'))
+			->where($this->db->quoteName('alias') . ' = ' . $this->db->quote(JFilterOutput::stringURLSafe($name)));
+		$this->db->setQuery($query);
+
+		return $this->db->loadResult() ? $this->db->loadResult() : '2';
+	}
+
+	/**
 	 * Read the first row of a CSV to create a name based mapping of column values
 	 *
 	 * @param $csvfile
@@ -210,7 +229,7 @@ class ImportTeamCli extends JApplicationCli
 			$article = array(
 				'access'       => 1,
 				'alias'        => JFilterOutput::stringURLSafe($item[$this->column->name]),
-				'catid'        => '2',
+				'catid'        => $this->getCategoryId($item[$this->column->office]),
 				'created'      => $date->toSQL(),
 				'created_by'   => $this->getAdminId(),
 				'introtext'    => '',
