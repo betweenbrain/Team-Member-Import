@@ -49,7 +49,7 @@ class ImportTeamCli extends JApplicationCli
 	 *
 	 * @var null
 	 */
-	private $column = null;
+	private $columnMap = null;
 
 	/**
 	 * The CSV file
@@ -86,8 +86,8 @@ class ImportTeamCli extends JApplicationCli
 			exit;
 		}
 
-		$this->csvfile = $this->readCSVFile($this->input->get('file'));
-		$this->column  = $this->mapColumnNames($this->csvfile);
+		$this->csvfile   = $this->readCSVFile($this->input->get('file'));
+		$this->columnMap = $this->mapColumnNames($this->csvfile);
 
 		// Fields mapping file
 		if ($this->input->get('fieldsMap'))
@@ -109,7 +109,7 @@ class ImportTeamCli extends JApplicationCli
 		$query
 			->select($this->db->quoteName('id'))
 			->from($this->db->quoteName('#__content'))
-			->where($this->db->quoteName('alias') . ' = ' . $this->db->quote(JFilterOutput::stringURLSafe($article[$this->column->name])));
+			->where($this->db->quoteName('alias') . ' = ' . $this->db->quote(JFilterOutput::stringURLSafe($article[$this->columnMap->name])));
 		$this->db->setQuery($query);
 
 		return $this->db->loadResult() ? true : false;
@@ -208,7 +208,7 @@ class ImportTeamCli extends JApplicationCli
 			$field            = new stdClass();
 			$field->articleid = $id;
 			$field->fieldsid  = $fieldMap->fieldid;
-			$field->value     = $item[$this->column->{$fieldMap->column}];
+			$field->value     = $item[$this->columnMap->{$fieldMap->column}];
 
 			$this->db->insertObject('#__fieldsattach_values', $field);
 		}
@@ -279,8 +279,8 @@ class ImportTeamCli extends JApplicationCli
 			$date                  = JFactory::getDate();
 			$article               = JTable::getInstance('content', 'JTable');
 			$article->access       = 1;
-			$article->alias        = JFilterOutput::stringURLSafe($item[$this->column->name]);
-			$article->catid        = $this->getCategoryId($item[$this->column->office]);
+			$article->alias        = JFilterOutput::stringURLSafe($item[$this->columnMap->name]);
+			$article->catid        = $this->getCategoryId($item[$this->columnMap->office]);
 			$article->created      = $date->toSQL();
 			$article->created_by   = $this->getAdminId();
 			$article->introtext    = '';
@@ -289,7 +289,7 @@ class ImportTeamCli extends JApplicationCli
 			$article->publish_up   = JFactory::getDate()->toSql();
 			$article->publish_down = $this->db->getNullDate();
 			$article->state        = 1;
-			$article->title        = $item[$this->column->name];
+			$article->title        = $item[$this->columnMap->name];
 
 			try
 			{
