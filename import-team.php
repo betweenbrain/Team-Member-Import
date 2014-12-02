@@ -252,7 +252,7 @@ class ImportTeamCli extends JApplicationCli
 
 			foreach ($fieldsHeader as $key => $value)
 			{
-				$fieldMap->{strtolower($key)} = $field[$value];
+				$fieldMap->{strtolower($key)} = strtolower($field[$value]);
 			}
 			$this->fieldsMap[] = $fieldMap;
 		}
